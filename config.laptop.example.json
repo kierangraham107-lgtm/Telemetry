@@ -1,0 +1,6 @@
+{
+  "port": 8080,
+  "bind": "0.0.0.0",
+  "machine_name": "kieran-laptop",
+  "agent": true
+}

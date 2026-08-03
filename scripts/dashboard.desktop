@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=Telemetry Dashboard
+Exec=/bin/bash -c "%h/telemetry/scripts/launch.sh"
+X-GNOME-Autostart-enabled=true

@@ -1,0 +1,11 @@
+{
+  "port": 8080,
+  "bind": "0.0.0.0",
+  "machine_name": "kieran-desktop",
+  "agent": false,
+  "peers": ["kieran-laptop:8080"],
+  "exec_url": "PASTE_YOUR_APPS_SCRIPT_EXEC_URL_HERE",
+  "journal_dir": "~/journal",
+  "journal_min_words": 15,
+  "journal_history": 28
+}

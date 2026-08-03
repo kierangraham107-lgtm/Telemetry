@@ -1,0 +1,14 @@
+[Unit]
+Description=Telemetry dashboard server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 %h/telemetry/server.py
+WorkingDirectory=%h/telemetry
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
