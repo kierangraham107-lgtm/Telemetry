@@ -28,8 +28,11 @@ body::before{content:''; position:fixed; inset:0; pointer-events:none; z-index:0
                    linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);
   background-size:60px 60px}
 #app{position:relative; z-index:1; height:100%; padding:var(--gap);
-     display:grid; grid-template-rows:auto 1fr 1fr; gap:var(--gap)}
-.row{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:var(--gap); min-height:0}
+     display:grid; grid-template-rows:auto 1fr 1fr;
+     grid-template-columns:repeat(4,minmax(0,1fr)); gap:var(--gap)}
+#head{grid-column:1/-1}
+.p-outlook{grid-column:3; grid-row:2/4}
+.panel{min-height:0}
 .panel{background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
        padding:var(--pad); position:relative; display:flex; flex-direction:column; min-height:0}
 .panel::before,.panel::after{content:''; position:absolute; width:8px; height:8px;
@@ -73,7 +76,16 @@ body::before{content:''; position:fixed; inset:0; pointer-events:none; z-index:0
 .arc-bg{stroke:var(--line); fill:none}
 .arc-fg{stroke-linecap:round; fill:none; transition:stroke-dashoffset .6s cubic-bezier(.4,0,.2,1)}
 @media (prefers-reduced-motion:reduce){.arc-fg{transition:none}}
-.hab-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(72px,1fr)); gap:7px}
+.hab-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(88px,1fr)); gap:9px}
+.dots{display:flex; gap:2px; justify-content:center; margin-top:4px}
+.dot7{width:6px; height:6px; border-radius:1px; background:var(--line)}
+.dot7.on{background:var(--green)}
+.dot7.today{outline:1px solid var(--ink-faint); outline-offset:1px}
+.wk-sum{border-top:1px solid var(--line); margin-top:9px; padding-top:7px;
+        display:grid; grid-template-columns:1fr 1fr; gap:5px}
+.wk-i{font-family:var(--mono); font-size:10px; color:var(--ink-faint);
+      display:flex; justify-content:space-between}
+.wk-i b{color:var(--ink); font-weight:400}
 .hab{text-align:center; cursor:pointer; border:1px solid transparent; border-radius:var(--r);
      padding:5px 2px; background:none; color:inherit; font:inherit}
 .hab:hover{border-color:var(--line); background:var(--panel-2)}
@@ -81,6 +93,14 @@ body::before{content:''; position:fixed; inset:0; pointer-events:none; z-index:0
 .hab .n{font-size:10px; color:var(--ink-dim); margin-top:3px; text-transform:capitalize; line-height:1.2}
 .hab .k{font-family:var(--mono); font-size:9px; color:var(--ink-faint)}
 .hab.done .n{color:var(--green)}
+.today-split{display:grid; grid-template-columns:1fr 1fr; gap:10px; flex:1; min-height:0}
+.today-col{min-height:0; overflow-y:auto; scrollbar-width:thin}
+.scale{display:grid; grid-template-columns:repeat(5,1fr); gap:3px; margin-bottom:3px}
+.scale .btn{padding:6px 0; text-align:center}
+.scale .btn.sel{background:var(--red); border-color:var(--red); color:#fff}
+.tl-log{font-family:var(--mono); font-size:9px; color:var(--ink-faint);
+        display:flex; flex-wrap:wrap; gap:5px; margin-bottom:7px}
+.tl-log b{color:var(--ink-dim); font-weight:400}
 .ql{display:flex; flex-wrap:wrap; gap:4px; align-items:center}
 .btn{background:var(--panel-2); border:1px solid var(--line); color:var(--ink-dim);
      font-family:var(--mono); font-size:10px; padding:5px 8px; border-radius:var(--r);
@@ -123,6 +143,13 @@ body::before{content:''; position:fixed; inset:0; pointer-events:none; z-index:0
 .g-bar{height:4px; background:var(--line); border-radius:2px; position:relative}
 .g-fill{height:100%; border-radius:2px; transition:width .6s cubic-bezier(.4,0,.2,1)}
 .g-pace{position:absolute; top:-3px; width:1px; height:10px; background:var(--ink-faint)}
+.ol-day{margin-bottom:10px}
+.ol-h{font-family:var(--mono); font-size:9px; letter-spacing:.14em; color:var(--red);
+      display:flex; justify-content:space-between; align-items:baseline;
+      border-bottom:1px solid var(--line); padding-bottom:3px; margin-bottom:5px}
+.ol-h .fc{color:var(--steel); letter-spacing:0}
+.ol-sec{font-family:var(--mono); font-size:8px; letter-spacing:.14em;
+        color:var(--ink-faint); margin:5px 0 2px}
 .ag-l{font-family:var(--mono); font-size:9px; letter-spacing:.12em; color:var(--ink-faint);
       padding-bottom:2px; border-bottom:1px solid var(--line-soft); margin:8px 0 4px;
       display:flex; justify-content:space-between}
@@ -180,8 +207,8 @@ body::before{content:''; position:fixed; inset:0; pointer-events:none; z-index:0
 .empty{color:var(--ink-faint); font-size:11px; font-style:italic; padding:5px 0}
 @media(max-width:1180px){
   html,body{overflow:auto}
-  #app{height:auto; grid-template-rows:none}
-  .row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #app{height:auto; grid-template-rows:none; grid-template-columns:repeat(2,minmax(0,1fr))}
+  .p-outlook{grid-column:auto; grid-row:auto; min-height:420px}
   .panel{min-height:210px}
   .chart-wrap{min-height:150px}
 }
@@ -190,12 +217,16 @@ body::before{content:''; position:fixed; inset:0; pointer-events:none; z-index:0
   html,body{overflow:auto}
   #app{height:auto}
   .row{grid-template-columns:1fr}
+  #app{grid-template-columns:1fr}
+  .p-outlook{grid-column:auto; grid-row:auto; min-height:0}
+  .today-split{grid-template-columns:1fr}
   #head{grid-template-columns:1fr auto; padding:9px 11px}
   #quote{grid-column:1/-1; text-align:left; padding:7px 0 0; border-top:1px solid var(--line-soft)}
   #q-txt{font-size:13px; -webkit-line-clamp:3}
   #clock{font-size:23px}
-  .p-today{order:1} .p-habits{order:2} .p-tasks{order:3} .p-goals{order:4}
-  .p-agenda{order:5} .p-load{order:6} .p-me{order:7} .p-body{order:8}
+  .p-today{order:1} .p-habits{order:2}
+  .p-outlook{order:3} .p-goals{order:4}
+  .p-load{order:6} .p-me{order:7} .p-body{order:8}
   .panel{min-height:0}
   .chart-wrap{min-height:160px}
   #j-btn{right:11px; bottom:11px} #j-btn .k{display:none}
@@ -215,55 +246,69 @@ body::before{content:''; position:fixed; inset:0; pointer-events:none; z-index:0
     <div id="quote"><div id="q-src"></div><div id="q-txt"></div></div>
     <div id="wx"><div class="t">--&deg;</div><div class="d">&nbsp;</div></div>
   </header>
-  <div class="row">
-    <section class="panel p-today">
-      <div class="panel-h"><h2 class="panel-t">Today</h2><span class="panel-meta" id="rings-meta"></span></div>
-      <div class="ring-strip" id="rings"></div>
-      <div class="body"><div class="ql" id="quicklog"></div></div>
-    </section>
-    <section class="panel p-habits">
-      <div class="panel-h"><h2 class="panel-t">This week</h2><span class="panel-meta" id="wk-meta"></span></div>
-      <div class="body"><div class="hab-grid" id="habits"></div></div>
-    </section>
-    <section class="panel p-tasks">
-      <div class="panel-h"><h2 class="panel-t">Tasks</h2><span class="panel-meta" id="t-meta"></span></div>
-      <div class="body" id="tasks"></div>
-      <div id="t-add">
-        <input id="t-in" placeholder="Add a task" aria-label="New task">
-        <select id="t-pri" aria-label="Priority">
-          <option value="1">P1</option><option value="2" selected>P2</option><option value="3">P3</option>
-        </select>
+  <section class="panel p-today">
+    <div class="panel-h"><h2 class="panel-t">Today</h2><span class="panel-meta" id="rings-meta"></span></div>
+    <div class="ring-strip" id="rings"></div>
+    <div class="today-split">
+      <div class="today-col">
+        <div class="ql" id="ql-intake"></div>
       </div>
-    </section>
-    <section class="panel p-goals">
-      <div class="panel-h"><h2 class="panel-t">Goals</h2><span class="panel-meta">tick = pace</span></div>
-      <div class="body" id="goals"></div>
-    </section>
-  </div>
-  <div class="row">
-    <section class="panel p-agenda">
-      <div class="panel-h"><h2 class="panel-t">Agenda</h2><span class="panel-meta" id="ag-meta"></span></div>
-      <div class="body" id="agenda"></div>
-    </section>
-    <section class="panel p-load">
-      <div class="panel-h"><h2 class="panel-t">Training load</h2><span class="panel-meta" id="tsb-meta"></span></div>
-      <div class="chart-wrap"><canvas id="c-load"></canvas></div>
-    </section>
-    <section class="panel p-me">
-      <div class="panel-h"><h2 class="panel-t">Mood / energy</h2><span class="panel-meta">14d</span></div>
-      <div class="chart-wrap"><canvas id="c-me"></canvas></div>
-    </section>
-    <section class="panel p-body">
-      <div class="panel-h"><h2 class="panel-t">Body</h2><span class="panel-meta">intervals.icu</span></div>
-      <div class="body">
-        <div id="body-stats"></div>
-        <div style="margin-top:9px;border-top:1px solid var(--line);padding-top:7px">
-          <div class="panel-meta" style="margin-bottom:5px" id="m-meta">machines</div>
-          <div id="machines"></div>
-        </div>
+      <div class="today-col">
+        <div class="ql-lab">Mood</div>
+        <div class="scale" id="sc-mood"></div>
+        <div class="tl-log" id="lg-mood"></div>
+        <div class="ql-lab">Energy</div>
+        <div class="scale" id="sc-energy"></div>
+        <div class="tl-log" id="lg-energy"></div>
       </div>
-    </section>
-  </div>
+    </div>
+  </section>
+
+  <section class="panel p-habits">
+    <div class="panel-h"><h2 class="panel-t">This week</h2><span class="panel-meta" id="wk-meta"></span></div>
+    <div class="body">
+      <div class="hab-grid" id="habits"></div>
+      <div class="wk-sum" id="wk-sum"></div>
+    </div>
+  </section>
+
+  <section class="panel p-outlook">
+    <div class="panel-h"><h2 class="panel-t">Outlook</h2><span class="panel-meta" id="ol-meta"></span></div>
+    <div class="body" id="outlook"></div>
+    <div id="t-add">
+      <input id="t-in" placeholder="Add a task" aria-label="New task">
+      <select id="t-pri" aria-label="Priority">
+        <option value="1">P1</option><option value="2" selected>P2</option><option value="3">P3</option>
+      </select>
+    </div>
+  </section>
+
+  <section class="panel p-goals">
+    <div class="panel-h"><h2 class="panel-t">Goals</h2><span class="panel-meta">tick = pace</span></div>
+    <div class="body" id="goals"></div>
+  </section>
+
+  <section class="panel p-load">
+    <div class="panel-h"><h2 class="panel-t">Training load</h2><span class="panel-meta" id="tsb-meta"></span></div>
+    <div class="chart-wrap"><canvas id="c-load"></canvas></div>
+  </section>
+
+  <section class="panel p-me">
+    <div class="panel-h"><h2 class="panel-t">Mood / energy</h2><span class="panel-meta">14d</span></div>
+    <div class="chart-wrap"><canvas id="c-me"></canvas></div>
+  </section>
+
+  <section class="panel p-body">
+    <div class="panel-h"><h2 class="panel-t">Body</h2><span class="panel-meta">intervals.icu</span></div>
+    <div class="body">
+      <div id="body-stats"></div>
+      <div style="margin-top:9px;border-top:1px solid var(--line);padding-top:7px">
+        <div class="panel-meta" style="margin-bottom:5px" id="m-meta">machines</div>
+        <div id="machines"></div>
+      </div>
+    </div>
+  </section>
+</div>
 </div>
 <button id="j-btn" aria-label="Write a journal entry">
   <span id="j-btn-t">Write</span><span class="k">Ctrl J</span>
@@ -354,31 +399,67 @@ function renderHabits(){
     var pct=x.target?x.weekDone/x.target:0;
     var col=pct>=1?'var(--green)':x.doneToday?'var(--red)':'var(--line)';
     return '<button class="hab'+(x.doneToday?' done':'')+'" data-k="'+x.key+'" aria-label="Log '+esc(x.name)+'">'
-      +ring({size:50,sw:4,pct:pct,color:col,val:x.weekDone})
-      +'<div class="n">'+esc(x.name)+'</div><div class="k">'+x.weekDone+'/'+x.target+'</div></button>';
+      +ring({size:56,sw:5,pct:pct,color:col,val:x.weekDone})
+      +'<div class="n">'+esc(x.name)+'</div><div class="k">'+x.weekDone+'/'+x.target+'</div>'
+      +'<div class="dots">'+(x.hist||[]).map(function(d,i){
+          return '<span class="dot7'+(d?' on':'')+(i===6?' today':'')+'"></span>';
+        }).join('')+'</div></button>';
   }).join('');
   document.getElementById('wk-meta').textContent=
     hs.filter(function(x){return x.weekDone>=x.target}).length+'/'+hs.length+' met';
+
+  // The habit rings left the panel half empty, so pull the week's headline
+  // numbers in underneath rather than padding it out with whitespace.
+  var wk=(DATA.monthly&&DATA.monthly.week)||[], sum=[];
+  wk.forEach(function(g){sum.push(['<span>'+esc(g.name)+'</span>','<b>'+g.cur+'/'+g.target+'</b>']);});
+  var jm=DATA.journal||{};
+  var jw=(jm.days||[]).slice(-7).reduce(function(a,d){return a+(d.words||0)},0);
+  sum.push(['<span>Journal words</span>','<b>'+jw+'</b>']);
+  var td=(DATA.today&&DATA.today.tsb);
+  if(td!==null&&td!==undefined)sum.push(['<span>Form</span>','<b>'+(td>0?'+':'')+td+'</b>']);
+  document.getElementById('wk-sum').innerHTML=sum.map(function(r){
+    return '<div class="wk-i">'+r[0]+r[1]+'</div>';}).join('');
   el.querySelectorAll('.hab').forEach(function(b){
     b.onclick=function(){logMetric(b.dataset.k,1)};});
 }
 
-var QUICK=[
+var INTAKE=[
  {lab:'Water',items:[['water',250,'250 ml'],['water',500,'500 ml'],['water',750,'750 ml']]},
  {lab:'Caffeine',items:[['caffeine',50,'50 mg'],['caffeine',100,'100 mg'],['caffeine',200,'200 mg']]},
- {lab:'Mood',items:[['mood',1,'1'],['mood',2,'2'],['mood',3,'3'],['mood',4,'4'],['mood',5,'5']]},
- {lab:'Energy',items:[['energy',1,'1'],['energy',2,'2'],['energy',3,'3'],['energy',4,'4'],['energy',5,'5']]},
  {lab:'Count',items:[['job_applied',1,'+1 job'],['read',25,'+25 pg'],['read',50,'+50 pg'],['book',1,'+1 book']]}
 ];
 function renderQuick(){
   var h='';
-  QUICK.forEach(function(g){
+  INTAKE.forEach(function(g){
     h+='<div class="ql-lab">'+g.lab+'</div>';
     g.items.forEach(function(i){h+='<button class="btn" data-m="'+i[0]+'" data-v="'+i[1]+'">'+i[2]+'</button>';});
   });
-  var q=document.getElementById('quicklog'); q.innerHTML=h;
+  var q=document.getElementById('ql-intake'); q.innerHTML=h;
   q.querySelectorAll('.btn').forEach(function(b){
     b.onclick=function(){logMetric(b.dataset.m,Number(b.dataset.v))};});
+
+  ['mood','energy'].forEach(function(k){
+    var el=document.getElementById('sc-'+k), out='';
+    for(var i=1;i<=5;i++) out+='<button class="btn" data-m="'+k+'" data-v="'+i+'">'+i+'</button>';
+    el.innerHTML=out;
+    el.querySelectorAll('.btn').forEach(function(b){
+      b.onclick=function(){logMetric(b.dataset.m,Number(b.dataset.v))};});
+  });
+}
+
+/* Today's readings with times: mood at 9am and mood at 6pm are different
+   information, and only showing the latest threw the earlier one away. */
+function renderScales(){
+  if(!DATA||!DATA.today)return;
+  var t=DATA.today;
+  [['mood',t.mood,t.moodLog],['energy',t.energy,t.energyLog]].forEach(function(p){
+    var sel=p[1], log=p[2]||[];
+    document.querySelectorAll('#sc-'+p[0]+' .btn').forEach(function(b){
+      b.classList.toggle('sel',Number(b.dataset.v)===sel);});
+    document.getElementById('lg-'+p[0]).innerHTML = log.length
+      ? log.map(function(e){return '<span><b>'+e.v+'</b> '+e.at+'</span>'}).join('')
+      : '<span>not logged today</span>';
+  });
 }
 
 function logMetric(metric,value){
@@ -387,9 +468,14 @@ function logMetric(metric,value){
   if(DATA&&DATA.today){
     if(metric==='water')DATA.today.water+=value;
     if(metric==='caffeine')DATA.today.caffeine+=value;
-    if(metric==='mood')DATA.today.mood=value;
-    if(metric==='energy')DATA.today.energy=value;
-    renderRings();
+    if(metric==='mood'||metric==='energy'){
+      DATA.today[metric]=value;
+      var lk=metric+'Log';
+      if(!DATA.today[lk])DATA.today[lk]=[];
+      DATA.today[lk].push({v:value,at:new Date().toLocaleTimeString(undefined,
+        {hour:'numeric',minute:'2-digit'}).toLowerCase().replace(' ','')});
+    }
+    renderRings();renderScales();
   }
   if(DATA&&DATA.habits){
     var hb=DATA.habits.filter(function(x){return x.key===metric})[0];
@@ -398,36 +484,80 @@ function logMetric(metric,value){
   setTimeout(function(){refresh(true)},1500);
 }
 
-function renderTasks(){
-  var ts=DATA.tasks||[], el=document.getElementById('tasks');
-  if(!ts.length){el.innerHTML='<div class="empty">Nothing due.</div>';
-    document.getElementById('t-meta').textContent='';return;}
-  var h='';
-  [['overdue','Overdue'],['today','Today'],['soon','Next 7 days']].forEach(function(b){
-    var rows=ts.filter(function(x){return x.bucket===b[0]});
-    if(!rows.length)return;
-    h+='<div class="bucket">'+b[1]+' · '+rows.length+'</div>';
-    rows.forEach(function(x){
-      h+='<div class="t-row p'+x.priority+(x.done?' done':'')+'">'
-        +'<button class="cb'+(x.done?' on':'')+'" data-t="'+esc(x.task)+'" data-d="'+(!x.done)+'"'
-        +' aria-label="'+(x.done?'Untick':'Tick')+' '+esc(x.task)+'"></button>'
-        +'<div class="t-n">'+esc(x.task)+'<div class="t-m">'
-        +(x.due?'<span class="'+(b[0]==='overdue'?'over':'')+'">'+x.due+'</span>':'')
-        +(x.tag?'<span>'+esc(x.tag)+'</span>':'')+'<span>P'+x.priority+'</span>'
-        +'</div></div></div>';
-    });
+function taskRow(x,over){
+  return '<div class="t-row p'+x.priority+(x.done?' done':'')+'">'
+    +'<button class="cb'+(x.done?' on':'')+'" data-r="'+x.row+'" data-t="'+esc(x.task)+'"'
+    +' data-d="'+(!x.done)+'" aria-label="'+(x.done?'Untick':'Tick')+' '+esc(x.task)+'"></button>'
+    +'<div class="t-n">'+esc(x.task)+'<div class="t-m">'
+    +(over&&x.due?'<span class="over">'+x.due+'</span>':'')
+    +(x.tag?'<span>'+esc(x.tag)+'</span>':'')+'<span>P'+x.priority+'</span>'
+    +'</div></div></div>';
+}
+
+/* Tasks and agenda were two half-empty panels answering the same question:
+   what is coming up. Merged into one three-day column. */
+function renderOutlook(){
+  var ts=DATA.tasks||[], days=DATA.agenda||[], h='';
+
+  var over=ts.filter(function(x){return x.bucket==='overdue'});
+  if(over.length){
+    h+='<div class="ol-day"><div class="ol-h"><span>OVERDUE</span>'
+      +'<span class="fc">'+over.length+'</span></div>'
+      +over.map(function(x){return taskRow(x,true)}).join('')+'</div>';
+  }
+
+  days.forEach(function(d,i){
+    var wd=DATA.weather&&DATA.weather.days&&DATA.weather.days[i];
+    var key=d.date?d.date.slice(0,10):null;
+    var dayTasks=ts.filter(function(x){return x.day===key});
+
+    h+='<div class="ol-day"><div class="ol-h"><span>'+d.label+'</span>'
+      +(wd?'<span class="fc">'+wd.min+'&ndash;'+wd.max+'&deg; · '+wd.rain+'%</span>':'')+'</div>';
+
+    if(d.events.length){
+      h+=d.events.map(function(e){
+        var w=wxAt(i,e.time);
+        return '<div class="ag-e"><span class="ag-t">'+e.time+'</span>'
+          +'<span class="ag-n">'+esc(e.title)+'</span>'
+          +(w?'<span class="ag-w">'+w.temp+'&deg;'
+              +(w.rain>=30?' <span class="rain">'+w.rain+'%</span>':'')+'</span>':'')
+          +'</div>';}).join('');
+    }
+    if(dayTasks.length){
+      if(d.events.length)h+='<div class="ol-sec">TASKS</div>';
+      h+=dayTasks.map(function(x){return taskRow(x,false)}).join('');
+    }
+    if(!d.events.length&&!dayTasks.length)h+='<div class="empty">clear</div>';
+    h+='</div>';
   });
-  el.innerHTML=h;
-  document.getElementById('t-meta').textContent=ts.filter(function(x){return !x.done}).length+' open';
-  el.querySelectorAll('.cb').forEach(function(b){
+
+  var later=ts.filter(function(x){return x.bucket==='soon'&&
+    !days.some(function(d){return d.date&&d.date.slice(0,10)===x.day})});
+  if(later.length){
+    h+='<div class="ol-day"><div class="ol-h"><span>LATER THIS WEEK</span></div>'
+      +later.map(function(x){return taskRow(x,true)}).join('')+'</div>';
+  }
+
+  var un=ts.filter(function(x){return x.bucket==='unscheduled'});
+  if(un.length){
+    h+='<div class="ol-day"><div class="ol-h"><span>UNSCHEDULED</span></div>'
+      +un.map(function(x){return taskRow(x,false)}).join('')+'</div>';
+  }
+
+  document.getElementById('outlook').innerHTML=h||'<div class="empty">Nothing coming up.</div>';
+  document.getElementById('ol-meta').textContent=
+    ts.filter(function(x){return !x.done}).length+' open';
+
+  document.getElementById('outlook').querySelectorAll('.cb').forEach(function(b){
     b.onclick=function(){
       var done=b.dataset.d==='true';
-      post({metric:'task',value:b.dataset.t,done:done});
+      post({metric:'task',value:b.dataset.t,row:Number(b.dataset.r),done:done});
       b.classList.toggle('on',done);
       b.closest('.t-row').classList.toggle('done',done);
       b.dataset.d=String(!done);
       setTimeout(function(){refresh(true)},1500);};});
 }
+
 function addTask(){
   var i=document.getElementById('t-in'), n=i.value.trim();
   if(!n)return;
@@ -463,26 +593,6 @@ function wxAt(dayIdx,timeStr){
   wd.hourly.forEach(function(s){var d=Math.abs(s.hour-hr);if(d<bd){bd=d;best=s;}});
   return best?{temp:best.temp,rain:best.rain}:null;
 }
-function renderAgenda(){
-  var days=DATA.agenda||[], total=days.reduce(function(a,d){return a+d.events.length},0);
-  document.getElementById('ag-meta').textContent=total?total+' events':'';
-  if(!total){document.getElementById('agenda').innerHTML=
-    '<div class="empty">Nothing scheduled in the next three days.</div>';return;}
-  document.getElementById('agenda').innerHTML=days.map(function(d,i){
-    var wd=DATA.weather&&DATA.weather.days&&DATA.weather.days[i];
-    var head='<div class="ag-l"><span>'+d.label+'</span>'
-      +(wd?'<span class="fc">'+wd.min+'&ndash;'+wd.max+'&deg; · '+wd.rain+'%</span>':'')+'</div>';
-    if(!d.events.length)return head+'<div class="empty">clear</div>';
-    return head+d.events.map(function(e){
-      var w=wxAt(i,e.time);
-      return '<div class="ag-e"><span class="ag-t">'+e.time+'</span>'
-        +'<span class="ag-n">'+esc(e.title)+'</span>'
-        +(w?'<span class="ag-w">'+w.temp+'&deg;'
-            +(w.rain>=30?' <span class="rain">'+w.rain+'%</span>':'')+'</span>':'')
-        +'</div>';}).join('');
-  }).join('');
-}
-
 function renderBody(){
   var t=DATA.today;
   var rows=[['Resting HR',t.rhr,'bpm'],['HRV',t.hrv,'ms'],['Weight',t.weight,'kg'],
@@ -583,8 +693,8 @@ function tick(){
     n.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
 }
 function renderAll(){
-  renderRings();renderHabits();renderTasks();renderGoals();
-  renderAgenda();renderBody();renderCharts();
+  renderRings();renderScales();renderHabits();renderGoals();
+  renderOutlook();renderBody();renderCharts();
   var w=DATA.weather&&DATA.weather.current;
   if(w){document.querySelector('#wx .t').innerHTML=w.temp+'&deg;';
         document.querySelector('#wx .d').textContent=w.desc+' · feels '+w.feels+'°';}
