@@ -31,7 +31,51 @@
  */
 
 var TZ        = Session.getScriptTimeZone();
-var CALENDARS = ['Coaching', 'Kieran Graham', 'School', 'Training', 'Research'];
+/**
+ * Calendars to pull into the agenda.
+ *
+ * An entry may be a display NAME or a calendar ID. Your primary calendar
+ * shows as your name in the Google Calendar UI but has no name as far as
+ * the API is concerned -- getCalendarsByName() will never find it. Its ID
+ * is your email address, so list it that way.
+ *
+ * IDs are also safer for the rest: renaming a calendar in the UI silently
+ * breaks a name-based lookup, an ID never changes.
+ *
+ * label is what the dashboard shows; it can differ from the calendar name.
+ */
+var CALENDARS = [
+  { id: 'kieran.graham107@gmail.com', label: 'Personal' },
+  { id: '62720f00aebdb2c0a46b63b9b343b0e9528b3dabe2d4aee4b5d2bc4a7bef536e@group.calendar.google.com', label: 'Coaching' },
+  { id: '4911afeeaaf157eb44e453715c4668478d09cb8b3cd050663f26423761a4caff@group.calendar.google.com', label: 'School' },
+  { id: '7651b1d96389c6b6d083a1862fa7f1606d7cd71dff9d6a01387aea193565a5a0@group.calendar.google.com', label: 'Training' },
+  { id: '5447773480c545ddf5a037d0a1c69823c216335b4899468597c755518b5a8039@group.calendar.google.com', label: 'Research' }
+  // Available but not pulled -- uncomment to include:
+  // { id: 'f67aa16a9237bf09aa057460efb269025ca901a5da2ee1e5afc73b642533cc41@group.calendar.google.com', label: 'Planning' },
+  // { id: '53d693e3be05ab11bfd707c4efe72be3732d9663b4d7b7d04a55699f620494d0@group.calendar.google.com', label: 'L/K' }
+];
+
+/**
+ * Resolves a CALENDARS entry to a Calendar object. Accepts an ID, a name,
+ * or a plain string for backwards compatibility. Returns null rather than
+ * throwing, so one bad entry cannot take the whole agenda down.
+ */
+function resolveCalendar_(entry) {
+  var spec  = typeof entry === 'string' ? { id: entry, label: entry } : entry;
+  var label = spec.label || spec.id;
+
+  if (spec.id) {
+    try {
+      var byId = CalendarApp.getCalendarById(spec.id);
+      if (byId) return { cal: byId, label: label };
+    } catch (err) { /* not an id, or no access: fall through to name lookup */ }
+  }
+
+  var byName = CalendarApp.getCalendarsByName(spec.name || spec.id || '');
+  if (byName && byName.length) return { cal: byName[0], label: label };
+
+  return null;
+}
 
 var GOALS = {
   water:    2500,   // ml
@@ -48,6 +92,11 @@ var JOURNAL_MIN_WORDS = 15;
  *  GET
  * ========================================================== */
 function doGet(e) {
+  // Wattline serves HTML and must come first: reading the brief should not
+  // trigger a sheet write. Returns null for every normal dashboard call.
+  var wl = wattlineServe(e);
+  if (wl) return wl;
+
   var out = {};
 
   try {
@@ -66,6 +115,7 @@ function doGet(e) {
     out.quote     = getQuote();
     out.journal   = getJournalMeta();
     out.context   = getCurrentActivity();
+    out.wattline  = getWattline();
   } catch (err) {
     out.ok    = false;
     out.error = String(err);
@@ -113,7 +163,7 @@ function doPost(e) {
     var body = JSON.parse(e.postData.contents);
 
     if (body.metric === 'task') {
-      res.ok = toggleTask(body.value, body.done);
+      res.ok = toggleTask(body.value, body.done, body.row);
 
     } else if (body.metric === 'newtask') {
       addTask(body);
@@ -196,15 +246,15 @@ function getCurrentActivity() {
   var now = new Date();
 
   for (var i = 0; i < CALENDARS.length; i++) {
-    var cals = CalendarApp.getCalendarsByName(CALENDARS[i]);
-    if (!cals || !cals.length) continue;
+    var r = resolveCalendar_(CALENDARS[i]);
+    if (!r) continue;
 
-    var evts = cals[0].getEvents(new Date(now.getTime() - 3600000),
-                                 new Date(now.getTime() + 3600000));
+    var evts = r.cal.getEvents(new Date(now.getTime() - 3600000),
+                               new Date(now.getTime() + 3600000));
     for (var j = 0; j < evts.length; j++) {
       if (evts[j].isAllDayEvent()) continue;
       if (evts[j].getStartTime() <= now && evts[j].getEndTime() >= now) {
-        return { title: evts[j].getTitle(), calendar: CALENDARS[i] };
+        return { title: evts[j].getTitle(), calendar: r.label };
       }
     }
   }
@@ -271,14 +321,20 @@ function addTask(body) {
   ]);
 }
 
-function toggleTask(taskName, done) {
-  var sh    = ss().getSheetByName('TASKS');
+function toggleTask(taskName, done, row) {
+  var sh = ss().getSheetByName('TASKS');
+
+  // Row number is unambiguous. Names are not: a recurring task has one
+  // row per day, all with the same name.
+  if (row && Number(row) > 1 && Number(row) <= sh.getLastRow()) {
+    sh.getRange(Number(row), 5).setValue(done === true);
+    return true;
+  }
+
   var rows  = sh.getDataRange().getValues();
   var today = startOfDay(new Date());
-
-  // Match the row for TODAY first. A recurring task has many rows with
-  // the same name; ticking one must not tick last Tuesday's.
   var fallback = -1;
+
   for (var i = 1; i < rows.length; i++) {
     if (String(rows[i][0]).trim() !== String(taskName).trim()) continue;
 
@@ -378,16 +434,22 @@ function getTasks() {
     var date = rows[i][1] instanceof Date ? startOfDay(rows[i][1]) : null;
     var done = rows[i][4] === true;
 
+    // A completed past task is finished business. Leaving it on the board
+    // is why ticking an overdue item looked like it did nothing.
+    if (done && date && date < today) continue;
+
     var bucket;
-    if (date === null)         bucket = 'soon';
-    else if (date < today)     bucket = done ? 'today' : 'overdue';
+    if (date === null)         bucket = 'unscheduled';
+    else if (date < today)     bucket = 'overdue';
     else if (+date === +today) bucket = 'today';
     else if (date < soon)      bucket = 'soon';
     else                       continue;
 
     out.push({
+      row:      i + 1,                        // identity: names repeat, rows don't
       task:     String(name),
       date:     date ? date.toISOString() : null,
+      day:      date ? dayKey(date) : null,
       due:      date ? Utilities.formatDate(date, TZ, 'EEE d MMM') : '',
       priority: Number(rows[i][2]) || 2,
       done:     done,
@@ -397,7 +459,7 @@ function getTasks() {
     });
   }
 
-  var order = { overdue: 0, today: 1, soon: 2 };
+  var order = { overdue: 0, today: 1, soon: 2, unscheduled: 3 };
   out.sort(function(a, b) {
     if (order[a.bucket] !== order[b.bucket]) return order[a.bucket] - order[b.bucket];
     if (a.done !== b.done)                   return a.done ? 1 : -1;
@@ -444,6 +506,21 @@ function getToday() {
 
   t.moodAt   = t.moodAt   ? t.moodAt.toISOString()   : null;
   t.energyAt = t.energyAt ? t.energyAt.toISOString() : null;
+
+  // Every press is stored, so show today's readings rather than only the
+  // last one. Mood at 9am and mood at 6pm are different information.
+  t.moodLog   = [];
+  t.energyLog = [];
+  for (var q = 1; q < log.length; q++) {
+    var qs = log[q][0];
+    if (!(qs instanceof Date) || qs < start || qs >= end) continue;
+    var qm = String(log[q][1]).toLowerCase().trim();
+    if (qm !== 'mood' && qm !== 'energy') continue;
+    t[qm === 'mood' ? 'moodLog' : 'energyLog'].push({
+      v: Number(log[q][2]) || 0,
+      at: Utilities.formatDate(qs, TZ, 'h:mma').toLowerCase()
+    });
+  }
 
   // Most recent NON-NULL per field, independently: Intervals writes ctl/atl
   // daily but sleep/hrv/rhr only when the watch actually synced, so "last
@@ -710,18 +787,18 @@ function getAgenda() {
     var end   = new Date(start.getTime() + 86400000);
     var evts  = [];
 
-    CALENDARS.forEach(function(calName){
-      var cals = CalendarApp.getCalendarsByName(calName);
-      if (!cals || !cals.length) return;             // missing calendar: skip quietly
+    CALENDARS.forEach(function(entry){
+      var r = resolveCalendar_(entry);
+      if (!r) return;                                // unresolvable: skip quietly
 
-      cals[0].getEvents(start, end).forEach(function(ev){
+      r.cal.getEvents(start, end).forEach(function(ev){
         evts.push({
-          time:    ev.isAllDayEvent() ? 'ALL DAY'
-                   : Utilities.formatDate(ev.getStartTime(), TZ, 'h:mma').toLowerCase(),
-          sortKey: ev.isAllDayEvent() ? 0 : ev.getStartTime().getTime(),
-          title:   ev.getTitle(),
-          calendar: calName,
-          allDay:  ev.isAllDayEvent()
+          time:     ev.isAllDayEvent() ? 'ALL DAY'
+                    : Utilities.formatDate(ev.getStartTime(), TZ, 'h:mma').toLowerCase(),
+          sortKey:  ev.isAllDayEvent() ? 0 : ev.getStartTime().getTime(),
+          title:    ev.getTitle(),
+          calendar: r.label,
+          allDay:   ev.isAllDayEvent()
         });
       });
     });
@@ -823,13 +900,19 @@ function getQuote() {
   var doy   = Math.floor((new Date() - start) / 86400000);
   var q     = list[doy % list.length];
 
-  var text = q.quote || q.text || String(q);
-  var src  = '';
-  if (q.season && q.episode) {
-    src = 'S' + pad2(q.season) + 'E' + pad2(q.episode)
-        + (q.title ? ' \u2014 ' + String(q.title).toUpperCase() : '');
-  }
-  return { text: text, source: src };
+  var text = q.quote || q.text || q.line || String(q);
+
+  // Field names vary between quote APIs, so check the common spellings
+  // rather than silently returning a blank source.
+  var season  = q.season  || q.season_number  || q.seasonNumber;
+  var episode = q.episode || q.episode_number || q.episodeNumber || q.ep;
+  var title   = q.title   || q.episode_title  || q.episodeTitle || q.name;
+
+  var src = '';
+  if (season && episode) src = 'S' + pad2(season) + 'E' + pad2(episode);
+  if (title) src += (src ? '  \u00b7  ' : '') + String(title).toUpperCase();
+
+  return { text: text, source: src, raw: Object.keys(q).join(',') };
 }
 
 
@@ -935,14 +1018,15 @@ function testCalendars() {
   var start = startOfDay(new Date());
   var end   = new Date(start.getTime() + 3 * 86400000);
 
-  CALENDARS.forEach(function(name){
-    var cals = CalendarApp.getCalendarsByName(name);
-    if (!cals || !cals.length) {
-      Logger.log('  MISSING: "' + name + '"  <- no calendar with this exact name');
+  CALENDARS.forEach(function(entry){
+    var spec = typeof entry === 'string' ? { id: entry, label: entry } : entry;
+    var r    = resolveCalendar_(entry);
+    if (!r) {
+      Logger.log('  MISSING: "' + (spec.label || spec.id) + '"  <- could not resolve');
       return;
     }
-    Logger.log('  ok: "' + name + '"  events next 3d = '
-               + cals[0].getEvents(start, end).length);
+    Logger.log('  ok: %s  (%s)  events next 3d = %s',
+               r.label, r.cal.getName(), r.cal.getEvents(start, end).length);
   });
 }
 

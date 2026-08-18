@@ -28,10 +28,11 @@ body::before{content:''; position:fixed; inset:0; pointer-events:none; z-index:0
                    linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);
   background-size:60px 60px}
 #app{position:relative; z-index:1; height:100%; padding:var(--gap);
-     display:grid; grid-template-rows:auto 1fr 1fr;
+     display:grid; grid-template-rows:auto auto 1fr 1fr;
      grid-template-columns:repeat(4,minmax(0,1fr)); gap:var(--gap)}
 #head{grid-column:1/-1}
-.p-outlook{grid-column:3; grid-row:2/4}
+#wattline{grid-column:1/-1}
+.p-outlook{grid-column:3; grid-row:3/5}
 .panel{min-height:0}
 .panel{background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
        padding:var(--pad); position:relative; display:flex; flex-direction:column; min-height:0}
@@ -208,6 +209,7 @@ body::before{content:''; position:fixed; inset:0; pointer-events:none; z-index:0
 @media(max-width:1180px){
   html,body{overflow:auto}
   #app{height:auto; grid-template-rows:none; grid-template-columns:repeat(2,minmax(0,1fr))}
+  #wattline{grid-column:1/-1}
   .p-outlook{grid-column:auto; grid-row:auto; min-height:420px}
   .panel{min-height:210px}
   .chart-wrap{min-height:150px}
@@ -246,6 +248,14 @@ body::before{content:''; position:fixed; inset:0; pointer-events:none; z-index:0
     <div id="quote"><div id="q-src"></div><div id="q-txt"></div></div>
     <div id="wx"><div class="t">--&deg;</div><div class="d">&nbsp;</div></div>
   </header>
+  <a id="wattline" href="#" target="_blank" rel="noopener">
+    <span id="wl-flag">Wattline</span>
+    <span id="wl-no"></span>
+    <span id="wl-head"></span>
+    <span id="wl-sec"></span>
+    <span id="wl-meta"></span>
+  </a>
+
   <section class="panel p-today">
     <div class="panel-h"><h2 class="panel-t">Today</h2><span class="panel-meta" id="rings-meta"></span></div>
     <div class="ring-strip" id="rings"></div>
@@ -593,6 +603,22 @@ function wxAt(dayIdx,timeStr){
   wd.hourly.forEach(function(s){var d=Math.abs(s.hour-hr);if(d<bd){bd=d;best=s;}});
   return best?{temp:best.temp,rain:best.rain}:null;
 }
+/* Wattline: the daily brief, written to Drive by a scheduled task and
+   indexed by Apps Script. Hidden entirely when there is no issue yet. */
+function renderWattline(){
+  var w=DATA.wattline, el=document.getElementById('wattline');
+  if(!w||!w.latest){el.classList.remove('on','new');return;}
+  var L=w.latest;
+  el.classList.add('on');
+  el.classList.toggle('new',!!L.isToday);
+  el.href=L.url||w.archiveUrl||'#';
+  document.getElementById('wl-no').textContent='No. '+L.issue;
+  document.getElementById('wl-head').textContent=L.headline||'';
+  document.getElementById('wl-sec').textContent=L.sections||'';
+  document.getElementById('wl-meta').textContent=
+    (L.date||'')+(L.readtime?' · '+L.readtime+' min':'');
+}
+
 function renderBody(){
   var t=DATA.today;
   var rows=[['Resting HR',t.rhr,'bpm'],['HRV',t.hrv,'ms'],['Weight',t.weight,'kg'],
@@ -694,7 +720,7 @@ function tick(){
 }
 function renderAll(){
   renderRings();renderScales();renderHabits();renderGoals();
-  renderOutlook();renderBody();renderCharts();
+  renderOutlook();renderWattline();renderBody();renderCharts();
   var w=DATA.weather&&DATA.weather.current;
   if(w){document.querySelector('#wx .t').innerHTML=w.temp+'&deg;';
         document.querySelector('#wx .d').textContent=w.desc+' · feels '+w.feels+'°';}
