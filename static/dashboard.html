@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Telemetry</title>
+<meta name="dash-version" content="2026-08-18-grid-areas">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&family=Oswald:wght@300;400;500&display=swap" rel="stylesheet">
@@ -27,12 +28,27 @@ body::before{content:''; position:fixed; inset:0; pointer-events:none; z-index:0
   background-image:linear-gradient(var(--line-soft) 1px,transparent 1px),
                    linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);
   background-size:60px 60px}
+/* Every area is named and placed explicitly. Auto-placement flowed the
+   panels differently depending on whether the wattline row was present,
+   which is why the boxes moved around. */
 #app{position:relative; z-index:1; height:100%; padding:var(--gap);
-     display:grid; grid-template-rows:auto auto 1fr 1fr;
-     grid-template-columns:repeat(4,minmax(0,1fr)); gap:var(--gap)}
-#head{grid-column:1/-1}
-#wattline{grid-column:1/-1}
-.p-outlook{grid-column:3; grid-row:3/5}
+     display:grid; gap:var(--gap);
+     grid-template-columns:repeat(4,minmax(0,1fr));
+     grid-template-rows:auto auto 1fr 1fr;
+     grid-template-areas:
+       "head  head    head    head"
+       "watt  watt    watt    watt"
+       "today habits  outlook goals"
+       "load  mood    outlook body"}
+#head{grid-area:head}
+#wattline{grid-area:watt}
+.p-today{grid-area:today}
+.p-habits{grid-area:habits}
+.p-outlook{grid-area:outlook}
+.p-goals{grid-area:goals}
+.p-load{grid-area:load}
+.p-me{grid-area:mood}
+.p-body{grid-area:body}
 .panel{min-height:0}
 .panel{background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
        padding:var(--pad); position:relative; display:flex; flex-direction:column; min-height:0}
@@ -68,6 +84,45 @@ body::before{content:''; position:fixed; inset:0; pointer-events:none; z-index:0
 #wx{text-align:right; font-family:var(--mono); white-space:nowrap}
 #wx .t{font-size:21px; font-weight:300}
 #wx .d{font-size:10px; color:var(--ink-dim); text-transform:uppercase; letter-spacing:.08em}
+/* ---------- wattline ----------
+   Its own collapsible box, full width under the header. Opens automatically
+   while today's issue is fresh, collapses to one line once read. */
+#wattline{display:none; background:var(--panel); border:1px solid var(--line);
+          border-left:2px solid var(--crawl); border-radius:var(--r); overflow:hidden}
+#wattline.on{display:block}
+#wl-bar{display:flex; align-items:center; gap:12px; padding:8px 13px; cursor:pointer;
+        user-select:none; min-width:0}
+#wl-bar:hover{background:var(--panel-2)}
+#wl-bar:focus-visible{outline:2px solid var(--crawl); outline-offset:-2px}
+#wl-flag{font-family:var(--disp); font-size:10px; letter-spacing:.22em; text-transform:uppercase;
+         color:var(--crawl); flex:0 0 auto}
+#wl-no{font-family:var(--mono); font-size:10px; color:var(--ink-faint); flex:0 0 auto}
+#wl-bar-head{flex:1; min-width:0; font-size:12px; color:var(--ink-dim);
+             overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+#wattline.open #wl-bar-head{visibility:hidden}
+#wl-new{background:var(--crawl); color:var(--ground); font-family:var(--mono); font-size:8px;
+        letter-spacing:.1em; padding:1px 5px; border-radius:2px; flex:0 0 auto; display:none}
+#wattline.fresh #wl-new{display:inline}
+#wl-chev{color:var(--ink-faint); font-size:9px; flex:0 0 auto; transition:transform .2s}
+#wattline.open #wl-chev{transform:rotate(180deg)}
+#wl-body{display:none; padding:0 15px 14px; border-top:1px solid var(--line-soft)}
+#wattline.open #wl-body{display:block}
+#wl-head{font-family:var(--disp); font-weight:400; font-size:19px; line-height:1.3;
+         color:var(--ink); margin:12px 0 5px}
+#wl-meta{font-family:var(--mono); font-size:10px; color:var(--ink-faint); margin-bottom:10px}
+#wl-secs{display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px}
+.wl-chip{font-size:11px; color:var(--ink-dim); background:var(--panel-2);
+         border:1px solid var(--line); border-radius:11px; padding:3px 10px}
+#wl-acts{display:flex; align-items:center; gap:9px; flex-wrap:wrap}
+.wl-btn{display:inline-block; text-decoration:none; font-family:var(--mono); font-size:11px;
+        padding:6px 14px; border-radius:var(--r); background:var(--crawl); color:var(--ground)}
+.wl-btn.ghost{background:none; border:1px solid var(--line); color:var(--ink-dim)}
+.wl-btn.ghost:hover{border-color:var(--crawl); color:var(--crawl)}
+#wl-prev{margin-left:auto; font-family:var(--mono); font-size:9px; color:var(--ink-faint);
+         display:flex; gap:10px; flex-wrap:wrap}
+#wl-prev a{color:var(--ink-faint); text-decoration:none}
+#wl-prev a:hover{color:var(--crawl)}
+@media(max-width:640px){#wl-head{font-size:16px} #wl-prev{margin-left:0; width:100%; margin-top:6px}}
 .ring-strip{display:flex; gap:8px; justify-content:space-between; flex:0 0 auto; margin-bottom:8px}
 .ring{text-align:center; min-width:0; flex:1}
 .ring svg{display:block; margin:0 auto}
@@ -208,9 +263,16 @@ body::before{content:''; position:fixed; inset:0; pointer-events:none; z-index:0
 .empty{color:var(--ink-faint); font-size:11px; font-style:italic; padding:5px 0}
 @media(max-width:1180px){
   html,body{overflow:auto}
-  #app{height:auto; grid-template-rows:none; grid-template-columns:repeat(2,minmax(0,1fr))}
-  #wattline{grid-column:1/-1}
-  .p-outlook{grid-column:auto; grid-row:auto; min-height:420px}
+  #app{height:auto; grid-template-columns:repeat(2,minmax(0,1fr));
+       grid-template-rows:none;
+       grid-template-areas:
+         "head    head"
+         "watt    watt"
+         "today   habits"
+         "outlook outlook"
+         "goals   load"
+         "mood    body"}
+  .p-outlook{min-height:420px}
   .panel{min-height:210px}
   .chart-wrap{min-height:150px}
 }
@@ -219,16 +281,15 @@ body::before{content:''; position:fixed; inset:0; pointer-events:none; z-index:0
   html,body{overflow:auto}
   #app{height:auto}
   .row{grid-template-columns:1fr}
-  #app{grid-template-columns:1fr}
-  .p-outlook{grid-column:auto; grid-row:auto; min-height:0}
+  #app{grid-template-columns:1fr;
+       grid-template-areas:
+         "head" "watt" "today" "habits" "outlook" "goals" "load" "mood" "body"}
+  .p-outlook{min-height:0}
   .today-split{grid-template-columns:1fr}
   #head{grid-template-columns:1fr auto; padding:9px 11px}
   #quote{grid-column:1/-1; text-align:left; padding:7px 0 0; border-top:1px solid var(--line-soft)}
   #q-txt{font-size:13px; -webkit-line-clamp:3}
   #clock{font-size:23px}
-  .p-today{order:1} .p-habits{order:2}
-  .p-outlook{order:3} .p-goals{order:4}
-  .p-load{order:6} .p-me{order:7} .p-body{order:8}
   .panel{min-height:0}
   .chart-wrap{min-height:160px}
   #j-btn{right:11px; bottom:11px} #j-btn .k{display:none}
@@ -248,13 +309,25 @@ body::before{content:''; position:fixed; inset:0; pointer-events:none; z-index:0
     <div id="quote"><div id="q-src"></div><div id="q-txt"></div></div>
     <div id="wx"><div class="t">--&deg;</div><div class="d">&nbsp;</div></div>
   </header>
-  <a id="wattline" href="#" target="_blank" rel="noopener">
-    <span id="wl-flag">Wattline</span>
-    <span id="wl-no"></span>
-    <span id="wl-head"></span>
-    <span id="wl-sec"></span>
-    <span id="wl-meta"></span>
-  </a>
+  <div id="wattline">
+    <div id="wl-bar" role="button" tabindex="0" aria-expanded="false" aria-controls="wl-body">
+      <span id="wl-flag">Wattline</span>
+      <span id="wl-no"></span>
+      <span id="wl-new">NEW</span>
+      <span id="wl-bar-head"></span>
+      <span id="wl-chev">&#9660;</span>
+    </div>
+    <div id="wl-body">
+      <div id="wl-head"></div>
+      <div id="wl-meta"></div>
+      <div id="wl-secs"></div>
+      <div id="wl-acts">
+        <a class="wl-btn" id="wl-read" target="_blank" rel="noopener">Read issue</a>
+        <a class="wl-btn ghost" id="wl-arch" target="_blank" rel="noopener">Archive</a>
+        <span id="wl-prev"></span>
+      </div>
+    </div>
+  </div>
 
   <section class="panel p-today">
     <div class="panel-h"><h2 class="panel-t">Today</h2><span class="panel-meta" id="rings-meta"></span></div>
@@ -605,18 +678,55 @@ function wxAt(dayIdx,timeStr){
 }
 /* Wattline: the daily brief, written to Drive by a scheduled task and
    indexed by Apps Script. Hidden entirely when there is no issue yet. */
+function wlSetOpen(open){
+  var el=document.getElementById('wattline');
+  el.classList.toggle('open',open);
+  document.getElementById('wl-bar').setAttribute('aria-expanded',String(open));
+  try{ localStorage.setItem('wl-collapsed-'+(WL_DATE||''), open?'0':'1'); }catch(e){}
+}
+
+var WL_DATE='';
+
+/* Wattline: the daily brief. Opens itself while today's issue is unread,
+   then stays collapsed once you've dismissed it -- per issue, so tomorrow's
+   opens again on its own. */
 function renderWattline(){
   var w=DATA.wattline, el=document.getElementById('wattline');
-  if(!w||!w.latest){el.classList.remove('on','new');return;}
+  if(!w||!w.latest){el.classList.remove('on','open','fresh');return;}
+
   var L=w.latest;
+  var first = WL_DATE !== L.date;
+  WL_DATE = L.date;
+
   el.classList.add('on');
-  el.classList.toggle('new',!!L.isToday);
-  el.href=L.url||w.archiveUrl||'#';
+  el.classList.toggle('fresh',!!L.isToday);
+
   document.getElementById('wl-no').textContent='No. '+L.issue;
+  document.getElementById('wl-bar-head').textContent=L.headline||'';
   document.getElementById('wl-head').textContent=L.headline||'';
-  document.getElementById('wl-sec').textContent=L.sections||'';
   document.getElementById('wl-meta').textContent=
-    (L.date||'')+(L.readtime?' · '+L.readtime+' min':'');
+    (L.date||'')+(L.readtime?'  ·  '+L.readtime+' min read':'');
+
+  document.getElementById('wl-secs').innerHTML=
+    (L.sections||'').split(/\s*·\s*/).filter(Boolean)
+      .map(function(x){return '<span class="wl-chip">'+esc(x)+'</span>'}).join('');
+
+  var read=document.getElementById('wl-read');
+  read.href=L.url||w.archiveUrl||'#';
+  read.style.display=L.url?'inline-block':'none';
+  var arch=document.getElementById('wl-arch');
+  arch.href=w.archiveUrl||'#';
+  arch.style.display=w.archiveUrl?'inline-block':'none';
+
+  document.getElementById('wl-prev').innerHTML=(w.recent||[]).slice(0,4).map(function(r){
+    return '<a href="'+esc(r.url)+'" target="_blank" rel="noopener">No.'+esc(r.issue)+'</a>';
+  }).join('');
+
+  if(first){
+    var dismissed='1';
+    try{ dismissed=localStorage.getItem('wl-collapsed-'+L.date)||'0'; }catch(e){ dismissed='0'; }
+    wlSetOpen(L.isToday && dismissed!=='1');
+  }
 }
 
 function renderBody(){
@@ -746,11 +856,18 @@ function refreshStats(){
     .catch(function(){STATS=null;renderMachines();});
 }
 function boot(){
+  console.log('dashboard build 2026-08-18-grid-areas');
   tick();setInterval(tick,10000);renderQuick();
   fetch('/api/config').then(function(r){return r.json()})
     .then(function(c){DEVICE=c.machine_name||'unknown';}).catch(function(){});
   refresh();refreshStats();
   setInterval(function(){refresh()},REFRESH_MS);setInterval(refreshStats,10000);
+  var wlBar=document.getElementById('wl-bar');
+  wlBar.onclick=function(){
+    wlSetOpen(!document.getElementById('wattline').classList.contains('open'));};
+  wlBar.onkeydown=function(e){
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();wlBar.onclick();}};
+
   document.getElementById('j-btn').onclick=openJournal;
   document.getElementById('j-cancel').onclick=closeJournal;
   document.getElementById('j-save').onclick=saveJournal;

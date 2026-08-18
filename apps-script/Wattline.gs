@@ -109,10 +109,15 @@ function wattlineMeta(fileId) {
   try {
     var html = wattlineHtml(fileId);
 
+    // Capture the opening quote and match the SAME character to close. The
+    // old pattern stopped at either quote type, so a headline containing an
+    // apostrophe was truncated at the apostrophe.
     ['sections', 'readtime', 'headline'].forEach(function(k){
-      var re = new RegExp('<meta\\s+name=["\']wattline-' + k + '["\']\\s+content=["\']([^"\']*)["\']', 'i');
-      var m  = html.match(re);
-      if (m) meta[k] = wattlineDecode_(m[1]);
+      var re = new RegExp(
+        '<meta\\s+name=[\'"]wattline-' + k + '[\'"]\\s+content=([\'"])([\\s\\S]*?)\\1',
+        'i');
+      var m = html.match(re);
+      if (m) meta[k] = wattlineDecode_(m[2]);
     });
 
     cache.put(key, JSON.stringify(meta), 21600);   // 6h, issues are immutable
@@ -161,8 +166,13 @@ function getWattline() {
     var list = wattlineIndex();
     out.count = list.length;
 
+    // getUrl() hands back the /dev URL when run from the editor, which
+    // 403s for anyone not signed into the script. Force /exec so the link
+    // works from the dashboard and the phone.
     var base = '';
-    try { base = ScriptApp.getService().getUrl(); } catch (err) {}
+    try { base = String(ScriptApp.getService().getUrl() || '').replace(/\/dev$/, '/exec'); }
+    catch (err) {}
+    out.base       = base;
     out.archiveUrl = base ? base + '?view=wattline' : '';
 
     if (!list.length) return out;
